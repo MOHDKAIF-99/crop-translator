@@ -3,9 +3,9 @@ import os
 import google.generativeai as genai
 from fastapi import FastAPI, File, Form, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from PIL import Image
 
-# Ensure GEMINI_API_KEY is set in your Render Environment Variables
 genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
 
 app = FastAPI()
@@ -18,6 +18,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/")
+async def read_root():
+    return FileResponse("index.html")
 
 @app.post("/translate")
 async def translate_image(
@@ -27,7 +30,6 @@ async def translate_image(
         contents = await image.read()
         img = Image.open(io.BytesIO(contents))
 
-        # Use gemini-1.5-flash or gemini-2.0-flash
         model = genai.GenerativeModel("gemini-1.5-flash")
 
         prompt = f"""
