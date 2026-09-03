@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crop & Translate</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 20px auto; padding: 10px; }
+    #crop-container { max-height: 400px; margin: 15px 0; display: none; }
+    img { max-width: 100%; }
+    .btn { background: #2563eb; color: white; padding: 10px 16px; border: none; border-radius: 6px; cursor: pointer; }
+    #result { margin-top: 20px; padding: 15px; background: #f3f4f6; border-radius: 6px; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+
+  <h2>Snap & Translate</h2>
+  <input type="file" id="imageInput" accept="image/*">
+  
+  <div id="crop-container">
+    <img id="imageToCrop" src="">
+  </div>
+
+  <div style="margin: 10px 0;">
+    <label for="lang">Target Language: </label>
+    <select id="lang">
+      <option value="Hinglish">Hinglish</option>
+      <option value="Hindi">Hindi</option>
+      <option value="English">English</option>
+    </select>
+  </div>
+
+  <button class="btn" id="translateBtn" style="display:none;">Translate Selection</button>
+
+  <div id="result">Upload or paste a screenshot to start.</div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+  <script>
+    let cropper;
+    const imageInput = document.getElementById('imageInput');
+    const imageToCrop = document.getElementById('imageToCrop');
+    const cropContainer = document.getElementById('crop-container');
+    const translateBtn = document.getElementById('translateBtn');
+    const resultDiv = document.getElementById('result');
+
+    imageInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          imageToCrop.src = event.target.result;
+          cropContainer.style.display = 'block';
+          translateBtn.style.display = 'inline-block';
+          
+          if (cropper) cropper.destroy();
+          cropper = new Cropper(imageToCrop, { viewMode: 1 });
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    translateBtn.addEventListener('click', () => {
+      if (!cropper) return;
+      
+      resultDiv.innerText = "Translating...";
+      
+      cropper.getCroppedCanvas().toBlob(async (blob) => {
+        const formData = new FormData();
+        formData.append('image', blob, 'cropped.png');
+        formData.append('target_lang', document.getElementById('lang').value);
+
+        const response = await fetch('http://localhost:8000/translate', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await response.json();
+        resultDiv.innerText = data.result || "Error translating image.";
+      });
+    });
+  </script>
+</body>
+</html>
