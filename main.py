@@ -43,7 +43,7 @@ async def translate_image(
         """
 
         # Auto-tries active Gemini models to prevent 404 errors
-        model_names = ["gemini-1.5-flash-latest", "gemini-2.0-flash", "gemini-1.5-flash"]
+        model_names = ["gemini-1.5-flash-latest" ,"gemini-2.5-flash"]
         
         last_error = None
         for name in model_names:
