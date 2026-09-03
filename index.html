@@ -70,7 +70,7 @@
         formData.append('image', blob, 'cropped.png');
         formData.append('target_lang', document.getElementById('lang').value);
 
-        const response = await fetch('http://localhost:8000/translate', {
+        const response = await fetch('https://crop-translator-xxxx.onrender.com/translate', {
           method: 'POST',
           body: formData
         });
