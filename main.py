@@ -30,8 +30,6 @@ async def translate_image(
         contents = await image.read()
         img = Image.open(io.BytesIO(contents))
 
-        model = genai.GenerativeModel("gemini-1.5-flash")
-
         prompt = f"""
         1. Extract all visible text from this cropped screenshot accurately.
         2. Translate the extracted text into {target_lang} (If target is Hinglish, write Hindi in Roman/English script).
@@ -44,8 +42,20 @@ async def translate_image(
         [Translation]
         """
 
-        response = model.generate_content([prompt, img])
-        return {"result": response.text}
+        # Auto-tries active Gemini models to prevent 404 errors
+        model_names = ["gemini-1.5-flash-latest", "gemini-2.0-flash", "gemini-1.5-flash"]
+        
+        last_error = None
+        for name in model_names:
+            try:
+                model = genai.GenerativeModel(name)
+                response = model.generate_content([prompt, img])
+                return {"result": response.text}
+            except Exception as e:
+                last_error = e
+                continue
+
+        return {"error": f"Model error: {str(last_error)}"}
 
     except Exception as e:
         return {"error": str(e)}
