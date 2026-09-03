@@ -25,7 +25,7 @@ async def translate_image(
   contents = await image.read()
   img = Image.open(io.BytesIO(contents))
 
-  model = genai.GenerativeModel("gemini-2.0-flash")
+  model = genai.GenerativeModel("gemini-3.6-flash")
 
   prompt = f"""
     1. Extract all visible text from this cropped screenshot accurately.
