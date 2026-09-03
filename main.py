@@ -1,13 +1,15 @@
 import io
 import os
+import google.generativeai as genai
 from fastapi import FastAPI, File, Form, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image
-import google.generativeai as genai
+
+# Ensure GEMINI_API_KEY is set in your Render Environment Variables
+genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
 
 app = FastAPI()
 
-# Enable CORS so browser requests from local files are allowed
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -16,32 +18,32 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
-
-@app.get("/")
-def home():
-    return {"status": "Crop Translator API is running"}
 
 @app.post("/translate")
 async def translate_image(
     image: UploadFile = File(...), target_lang: str = Form(...)
 ):
-    contents = await image.read()
-    img = Image.open(io.BytesIO(contents))
+    try:
+        contents = await image.read()
+        img = Image.open(io.BytesIO(contents))
 
-    model = genai.GenerativeModel("gemini-2.5-flash")
+        # Use gemini-1.5-flash or gemini-2.0-flash
+        model = genai.GenerativeModel("gemini-1.5-flash")
 
-    prompt = f"""
-    1. Extract all visible text from this cropped screenshot accurately.
-    2. Translate the extracted text into {target_lang}.
+        prompt = f"""
+        1. Extract all visible text from this cropped screenshot accurately.
+        2. Translate the extracted text into {target_lang} (If target is Hinglish, write Hindi in Roman/English script).
+        
+        Format output clearly as:
+        **Original Text:**
+        [Extracted Text]
+        
+        **Translation ({target_lang}):**
+        [Translation]
+        """
 
-    Format output clearly as:
-    **Original Text:**
-    [Text]
+        response = model.generate_content([prompt, img])
+        return {"result": response.text}
 
-    **Translation ({target_lang}):**
-    [Translation]
-    """
-
-    response = model.generate_content([prompt, img])
-    return {"result": response.text}
+    except Exception as e:
+        return {"error": str(e)}
